@@ -15,8 +15,12 @@ sealed trait DataSet {
   def filter(f: Data => Boolean): DataSet = FilterDataSet(this)(f)
 }
 
-case object NillDataSet extends DataSet {
-  val tail = NillDataSet
+case object NilDataSet extends DataSet {
+  val tail = NilDataSet
+}
+
+case class TableDataSet(name: Symbol) extends DataSet {
+  val tail = NilDataSet
 }
 
 case class MapDataSet(tail: DataSet)(f: Data => Data) extends DataSet {
@@ -46,6 +50,7 @@ sealed trait Data {
 }
 
 case object NilData extends Data {
+  val dataset = NilDataSet
   val tail = NilData
 }
 
