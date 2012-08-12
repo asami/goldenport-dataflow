@@ -4,7 +4,7 @@ import scalaz._, Scalaz._
 
 /**
  * @since   Jul. 28, 2012
- * @version Jul. 29, 2012
+ * @version Aug. 11, 2012
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataSet {
@@ -21,14 +21,25 @@ case object NilDataSet extends DataSet {
 
 case class TableDataSet(name: Symbol) extends DataSet {
   val tail = NilDataSet
+
+  override def map(f: Data => Data): DataSet = {
+    println("tm = " + f(TableData(this, name)))
+    MappedDataSet(this, f(TableData(this, name)))
+  }
 }
 
+case class MappedDataSet(tail: DataSet, data: Data) extends DataSet {
+}
+
+// XXX
 case class MapDataSet(tail: DataSet)(f: Data => Data) extends DataSet {
 }
 
+// XXX
 case class FlatMapDataSet(tail: DataSet)(f: Data => DataSet) extends DataSet {
 }
 
+// XXX
 case class FilterDataSet(tail: DataSet)(f: Data => Boolean) extends DataSet {
 }
 
@@ -43,18 +54,27 @@ sealed trait Data {
   def masterJoin(table: Symbol)(on: (DataOnData, DataOnData) => OnData)(implicit policy: MasterJoinPolicy): Data = {
     MasterJoinData(dataset, this)
   }
+  def record(fields: FieldDef*): RecordData = {
+    RecordData(dataset, this)
+  }
+  def selection(on: DataOnData => Boolean): Data = {
+    SelectionData(dataset, this)
+  }
 
   //
   def sum(key: Symbol): SumOp = SumOp(key)
   def count(key: Symbol): CountOp = CountOp(key)
 }
 
+sealed trait FieldDef
+case class SymbolFieldDef(key: Symbol) extends FieldDef
+
 case object NilData extends Data {
   val dataset = NilDataSet
   val tail = NilData
 }
 
-case class TableData(dataset: DataSet)(name: Symbol) extends Data {
+case class TableData(dataset: DataSet, name: Symbol) extends Data {
   val tail = NilData
 }
 
@@ -66,6 +86,11 @@ case class MasterJoinData(dataset: DataSet, tail: Data) extends Data {
 }
 
 case class UpdateData(dataset: DataSet, tail: Data)(key: Symbol, expr: Expr) extends Data
+
+case class RecordData(dataset: DataSet, tail: Data) extends Data
+
+case class SelectionData(dataset: DataSet, tail: Data) extends Data
+
 
 //
 sealed trait OnData {

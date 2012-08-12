@@ -9,7 +9,7 @@ import org.goldenport.scalatest.ScalazMatchers
 
 /**
  * @since   Jul. 28, 2012
- * @version Jul. 29, 2012
+ * @version Aug. 11, 2012
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -19,12 +19,20 @@ class DataFlowSpec extends WordSpec with ShouldMatchers with ScalazMatchers with
     "1" that {
       "1-1" in {
         val z = for (i <- table('T生産実績)) yield {
-          val x = i.sum('GENKA) + 10
+          println("i = " + i)
+          val x = i.sum('原価) + 10
           val y = i.masterJoin('M部門)((x, y) => x('部門Id) == y('部門Id) and x('製品Id) == y('製品Id))
           val z = y.update('NEW_GENKA, x)
-          z
+          val zz = z.record(SymbolFieldDef('A), SymbolFieldDef('B))
+          val zzz = zz.selection(x => x('部門Id) == 1)
+          println("zzz = " + zzz)
+          zzz
         }
+        println("z = " + z)
       }
     }
+  }
+  "2" that {
+    
   }
 }

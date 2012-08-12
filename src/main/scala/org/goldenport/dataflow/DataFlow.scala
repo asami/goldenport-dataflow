@@ -4,9 +4,10 @@ import scalaz._, Scalaz._
 
 /**
  * @since   Jul. 28, 2012
- * @version Jul. 29, 2012
+ * @version Aug.  4, 2012
  * @author  ASAMI, Tomoharu
  */
+/*
 case class DataFlow(flows: Seq[Flow]) {
   def map(x: Data => Data): DataFlow = {
     sys.error("?")
@@ -24,6 +25,7 @@ case class DataFlow(flows: Seq[Flow]) {
     withFilter(x)
   }
 }
+*/
 
 object DataFlow extends DataFlows
 
