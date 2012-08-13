@@ -8,14 +8,14 @@ import scalaz._, Scalaz._
  * @author  ASAMI, Tomoharu
  */
 sealed trait Sql {
-  def asString: String
+  def toText: String
 
   protected final def as_line(x: Option[Sql]) = {
-    x.map(_.asString).fold(_ + "\n", "")
+    x.map(_.toText).fold(_ + "\n", "")
   }
 
   protected final def as_line(x: Seq[Sql]) = {
-    x.map(_.asString).mkString("", "\n", "\n")
+    x.map(_.toText).mkString("", "\n", "\n")
   }
 }
 
@@ -25,23 +25,23 @@ case class Select(record: Record, from: From,
                   groupBy: Option[GroupBy] = None,
                   orderBy: Option[OrderBy] = None
                 ) extends Sql {
-  def asString = {
-    "select " + record.asString + "\n" +
-    from.asString + "\n" +
+  def toText = {
+    "select " + record.toText + "\n" +
+    from.toText + "\n" +
     as_line(joins) +
     as_line(where) + as_line(groupBy) + as_line(orderBy)
   }
 }
 
 case class Record(columns: Seq[Column]) extends Sql {
-  def asString = {
-    columns.map(_.asString).mkString(", ")
+  def toText = {
+    columns.map(_.toText).mkString(", ")
   }
 }
 
 case class Column(expr: Expr, name: Option[String] = None) extends Sql {
-  def asString = {
-    expr.asString + (name.map(" as " + _) | "")
+  def toText = {
+    expr.toText + (name.map(" as " + _) | "")
   }
 }
 
@@ -49,24 +49,24 @@ sealed trait Expr extends Sql {
 }
 
 case class QName(path: Seq[String]) extends Expr {
-  def asString = path.mkString(".")
+  def toText = path.mkString(".")
 }
 
 case class SubQuery(select: Select) extends Expr {
-  def asString = "(" + select + ")"
+  def toText = "(" + select + ")"
 }
 
 case class EqualExpr(lhs: Expr, rhs: Expr) extends Expr {
-  def asString = lhs.asString + " = " + rhs.asString
+  def toText = lhs.toText + " = " + rhs.toText
 }
 
 case class StringExpr(value: String) extends Expr {
-  def asString = "'" + value + "'"
+  def toText = "'" + value + "'"
 }
 
 case class From(expr: Expr, name: Option[String] = None) {
-  def asString = {
-    "from " + expr.asString + (name.map(" as " + _) | "")
+  def toText = {
+    "from " + expr.toText + (name.map(" as " + _) | "")
   }
 }
 
@@ -76,37 +76,37 @@ trait Join extends Sql {
   def on: Expr
 
   protected def join_expr = {
-    expr.asString + ((name.map(" as " + _.asString)) | "") + " on " + on.asString
+    expr.toText + ((name.map(" as " + _.toText)) | "") + " on " + on.toText
   }
 }
 
 case class LeftOuterJoin(expr: Expr, name: Option[QName], on: Expr) extends Join {
-  def asString = {
+  def toText = {
     "left outer join " + join_expr
   }
 }
 
 case class FullOuterJoin(expr: Expr, name: Option[QName], on: Expr) extends Join {
-  def asString = {
+  def toText = {
     "full outer join " + join_expr
   }
 }
 
 case class Where(expr: Expr) extends Sql {
-  def asString = {
-    "where " + expr.asString
+  def toText = {
+    "where " + expr.toText
   }
 }
 
 case class GroupBy(names: Seq[QName]) extends Sql {
-  def asString = {
-    "group by " + names.map(_.asString).mkString(".")
+  def toText = {
+    "group by " + names.map(_.toText).mkString(".")
   }
 }
 
 case class OrderBy(names: Seq[(QName, ByOrder)]) extends Sql {
-  def asString = {
-    "order by " + names.map(x => x._1.asString + " " + x._2).mkString(", ")
+  def toText = {
+    "order by " + names.map(x => x._1.toText + " " + x._2).mkString(", ")
   }
 }
 

@@ -2,9 +2,10 @@ package org.goldenport.dataflow
 
 import scalaz._, Scalaz._
 
+
 /**
  * @since   Jul. 28, 2012
- * @version Aug. 11, 2012
+ * @version Aug. 13, 2012
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataSet {
@@ -57,7 +58,7 @@ sealed trait Data {
   def record(fields: FieldDef*): RecordData = {
     RecordData(dataset, this)
   }
-  def selection(on: DataOnData => Boolean): Data = {
+  def filter(on: DataOnData => Boolean): Data = {
     SelectionData(dataset, this)
   }
 
@@ -90,7 +91,6 @@ case class UpdateData(dataset: DataSet, tail: Data)(key: Symbol, expr: Expr) ext
 case class RecordData(dataset: DataSet, tail: Data) extends Data
 
 case class SelectionData(dataset: DataSet, tail: Data) extends Data
-
 
 //
 sealed trait OnData {
