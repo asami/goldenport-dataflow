@@ -1,14 +1,21 @@
 package org.goldenport.dataflow
 
 import scalaz._, Scalaz._
-
+import sql._
 
 /**
  * @since   Jul. 28, 2012
  * @version Aug. 13, 2012
  * @author  ASAMI, Tomoharu
  */
-sealed trait DataSet {
+sealed trait SqlBuilder {
+  def toSql: Sql = {
+    toSql(Select(NullRecord, NullFrom))
+  }
+  def toSql(sql: Sql): Sql
+}
+
+sealed trait DataSet extends SqlBuilder {
   val tail: DataSet
   def map(f: Data => Data): DataSet = MapDataSet(this)(f)
   def flatMap(f: Data => DataSet): DataSet = FlatMapDataSet(this)(f)
@@ -18,6 +25,10 @@ sealed trait DataSet {
 
 case object NilDataSet extends DataSet {
   val tail = NilDataSet
+
+  def toSql(sql: Sql) = {
+    sys.error("not implemented yet.")
+  }
 }
 
 case class TableDataSet(name: Symbol) extends DataSet {
@@ -27,21 +38,41 @@ case class TableDataSet(name: Symbol) extends DataSet {
     println("tm = " + f(TableData(this, name)))
     MappedDataSet(this, f(TableData(this, name)))
   }
+
+  def toSql(sql: Sql): Sql = {
+    sys.error("not implemented yet")
+  }
 }
 
 case class MappedDataSet(tail: DataSet, data: Data) extends DataSet {
+
+  def toSql(sql: Sql): Sql = {
+    sys.error("not implemented yet")
+  }
 }
 
 // XXX
 case class MapDataSet(tail: DataSet)(f: Data => Data) extends DataSet {
+
+  def toSql(sql: Sql): Sql = {
+    sys.error("not implemented yet")
+  }
 }
 
 // XXX
 case class FlatMapDataSet(tail: DataSet)(f: Data => DataSet) extends DataSet {
+
+  def toSql(sql: Sql): Sql = {
+    sys.error("not implemented yet")
+  }
 }
 
 // XXX
 case class FilterDataSet(tail: DataSet)(f: Data => Boolean) extends DataSet {
+
+  def toSql(sql: Sql): Sql = {
+    sys.error("not implemented yet")
+  }
 }
 
 /**

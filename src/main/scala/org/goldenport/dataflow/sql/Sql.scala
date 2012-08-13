@@ -39,6 +39,8 @@ case class Record(columns: Seq[Column]) extends Sql {
   }
 }
 
+object NullRecord extends Record(Nil)
+
 case class Column(expr: Expr, name: Option[String] = None) extends Sql {
   def toText = {
     expr.toText + (name.map(" as " + _) | "")
@@ -64,11 +66,17 @@ case class StringExpr(value: String) extends Expr {
   def toText = "'" + value + "'"
 }
 
+object NullExpr extends Expr {
+  def toText = sys.error("not implemented yet.")
+}
+
 case class From(expr: Expr, name: Option[String] = None) {
   def toText = {
     "from " + expr.toText + (name.map(" as " + _) | "")
   }
 }
+
+object NullFrom extends From(NullExpr)
 
 trait Join extends Sql {
   def expr: Expr

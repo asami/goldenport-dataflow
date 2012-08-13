@@ -19,7 +19,7 @@ class SqlSpec extends WordSpec with ShouldMatchers with ScalazMatchers {
       "simple" in {
         val s = Select(Record(List(Column(QName(List("a")), none))),
                        From(QName(List("ma")), none))
-        println("SqlSpec = " + s.asString)
+        println("SqlSpec = " + s.toText)
       }
       "full" in {
         val s = Select(Record(List(Column(QName(List("a"))),
@@ -32,7 +32,7 @@ class SqlSpec extends WordSpec with ShouldMatchers with ScalazMatchers {
                        Where(EqualExpr(QName(List("m", "x")), StringExpr("01"))).some,
                        GroupBy(List(QName(List("id")))).some,
                        OrderBy(List((QName(List("id")), ASC))).some)
-        println("SqlSpec = " + s.asString)
+        println("SqlSpec = " + s.toText)
       }
     }
   }
