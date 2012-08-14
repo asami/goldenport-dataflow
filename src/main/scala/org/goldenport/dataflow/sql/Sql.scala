@@ -4,7 +4,7 @@ import scalaz._, Scalaz._
 
 /**
  * @since   Aug. 11, 2012
- * @version Aug. 13, 2012
+ * @version Aug. 15, 2012
  * @author  ASAMI, Tomoharu
  */
 sealed trait Sql {
@@ -37,6 +37,40 @@ case class Record(columns: Seq[Column]) extends Sql {
   def toText = {
     columns.map(_.toText).mkString(", ")
   }
+
+/*
+  def update(name: String, expr: Expr): Record = {
+    val a = columns.foldRight((nil[Column], List[(name -> expr)]))((x, a) => {
+      x.name match {
+        case Some(s) if s == name => (Column(expr, name.some) +: a._1, nil)
+        case None => {
+          x.expr match {
+            case qn: QName if qn.toText == name => (Column(expr, name.some) +: a._1, nil)
+            case _ => x
+          }
+        }
+      }
+    })
+    a._2 match {
+      case Nil => a
+      case _ => a :+ Column(expr, name.some)
+    }
+  }
+*/
+
+  def update(name: String, expr: Expr): Record = {
+    update(List(Column(expr, name.some)))
+  }
+
+  def update(xs: Seq[Column]): Record = {
+    val a = columns.foldRight((nil[Column], xs))((x, a) => {
+      xs.find(_.columnName == x.columnName) match {
+        case Some(s) => (s +: a._1, xs.filterNot(_.columnName == x.columnName))
+        case None => (x +: a._1, a._2)
+      }
+    })
+    Record(a._1 ++ a._2)
+  }
 }
 
 object NullRecord extends Record(Nil)
@@ -44,6 +78,13 @@ object NullRecord extends Record(Nil)
 case class Column(expr: Expr, name: Option[String] = None) extends Sql {
   def toText = {
     expr.toText + (name.map(" as " + _) | "")
+  }
+
+  def columnName = {
+    name | (expr match {
+      case qn: QName => qn.toText
+      case _ => "" // XXX
+    })
   }
 }
 
@@ -58,12 +99,36 @@ case class SubQuery(select: Select) extends Expr {
   def toText = "(" + select + ")"
 }
 
+case class SumExpr(name: QName) extends Expr {
+  def toText = "sum(" + name.toText + ")"
+}
+
+case class CountExpr(name: QName) extends Expr {
+  def toText = "count(" + name.toText + ")"
+}
+
+case class PlusExpr(lhs: Expr, rhs: Expr) extends Expr {
+  def toText = lhs.toText + " + " + rhs.toText
+}
+
 case class EqualExpr(lhs: Expr, rhs: Expr) extends Expr {
   def toText = lhs.toText + " = " + rhs.toText
 }
 
+case class AndExpr(lhs: Expr, rhs: Expr) extends Expr {
+  def toText = "(" + lhs.toText + ") and (" + rhs.toText + ")"
+}
+
+case class OrExpr(lhs: Expr, rhs: Expr) extends Expr {
+  def toText = "(" + lhs.toText + ") or (" + rhs.toText + ")"
+}
+
 case class StringExpr(value: String) extends Expr {
   def toText = "'" + value + "'"
+}
+
+case class IntExpr(value: Int) extends Expr {
+  def toText = value.toString
 }
 
 object NullExpr extends Expr {
