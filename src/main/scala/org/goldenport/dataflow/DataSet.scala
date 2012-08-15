@@ -79,13 +79,13 @@ sealed trait Data extends SqlBuilder {
 
   def update(key: Symbol, expr: Expr) = UpdateData(dataset, this, key, expr)
   def masterJoin(table: Symbol)(on: (DataExpr, DataExpr) => Predicate)(implicit policy: MasterJoinPolicy): Data = {
-    MasterJoinData(dataset, this, table, on)
+    MasterJoinData(dataset, this, table, on(toDataExpr, TableDataExpr(table)))
   }
   def record(fields: FieldDef*): RecordData = {
     RecordData(dataset, this, fields.toSeq)
   }
   def where(on: DataExpr => Predicate): Data = {
-    WhereData(dataset, this, on(DataExpr()))
+    WhereData(dataset, this, on(toDataExpr))
   }
 
   //
@@ -99,6 +99,8 @@ sealed trait Data extends SqlBuilder {
   protected def to_Select(select: Select) = {
     select
   }
+
+  def toDataExpr: DataExpr = new DataExpr() {}
 }
 
 sealed trait FieldDef
@@ -122,8 +124,13 @@ case class SqlData(dataset: DataSet)(sql: String) extends Data {
 case class MasterJoinData(
   dataset: DataSet, tail: Data,
   table: Symbol,
-  on: (DataExpr, DataExpr) => Predicate
+  on: Predicate
 ) extends Data {
+  override protected def to_Select(select: Select) = {
+    select.copy(joins = select.joins :+
+                sql.LeftOuterJoin(sql.QName(List(table.name)),
+                                  none, on.toSql))
+  }
 }
 
 case class UpdateData(dataset: DataSet, tail: Data, key: Symbol, expr: Expr) extends Data {
@@ -183,12 +190,15 @@ sealed trait Expr {
   def toSql: sql.Expr
 }
 
-case class DataExpr() extends Expr {
+trait DataExpr extends Expr {
   def apply(key: Symbol): FieldExpr = {
     FieldExpr(key)
   }
 
   def toSql = sql.QName(List("Unkonwn"))
+}
+
+case class TableDataExpr(table: Symbol) extends DataExpr{
 }
 
 case class FieldExpr(key: Symbol) extends Expr {
